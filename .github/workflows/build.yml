@@ -1,22 +1,26 @@
 name: Build APK
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
-
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          path: ~/.buildozer
-          key: buildozer-global-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libssl-dev cmake
 
       - name: Build with Buildozer
         uses: ArtemGovorov/buildozer-action@v1
@@ -25,9 +29,8 @@ jobs:
           command: buildozer android debug
           repository_root: .
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: program-apk
-          path: bin/*.apk 
-          
+          path: bin/*.apk
